@@ -48,7 +48,7 @@ void ss_macro::eval(){
 				std::string top = s.top();
 				s.pop();
 				auto itor = s_map_macros.find(top);
-				if (itor->second.evaluting){
+				if (itor == s_map_macros.end() || itor->second.evaluting){
 					s.top().push_back('{');
 					s.top().append(top);
 					s.top().push_back('}');
@@ -122,3 +122,22 @@ int ss_macro_get_content(const char* name, char* buf, size_t sz){
 	return cache.length();
 }
 
+const std::string & ss_macro_get_content(const char* name){
+	auto itor = s_map_macros.find(name);
+	if (itor == s_map_macros.end()){
+		static std::string empty;
+		return empty;
+	}
+	return itor->second.cache;
+}
+
+int SS_CORE_API ss_macro_get_integer(const char* name){
+	auto itor = s_map_macros.find(name);
+	if (itor == s_map_macros.end()){
+		static std::string empty;
+		return 0;
+	}
+	int val = 0;
+	sscanf(itor->second.cache.c_str(), "%d", &val);
+	return val;
+}
