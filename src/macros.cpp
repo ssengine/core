@@ -1,4 +1,4 @@
-#include <ssengine/macros.hpp>
+#include <ssengine/macros.h>
 #include <vector>
 #include <map>
 #include <string>

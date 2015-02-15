@@ -12,7 +12,6 @@ BOOL WINAPI DllMain(
 }
 #endif
 
-
 wchar_t* char2wchar_t(const char* str)
 {
 	int len = MultiByteToWideChar(CP_UTF8, 0, str, -1, NULL, 0);

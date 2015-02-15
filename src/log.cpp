@@ -1,6 +1,6 @@
 #include "core.h"
 #include <stdarg.h>
-#include <ssengine/log.hpp>
+#include <ssengine/log.h>
 #include <vector>
 
 std::vector<ss_logger*>  loggers;
