@@ -11,6 +11,9 @@ SET(LOCAL_SOURCES_FILES
 	src/log.cpp
 	src/macros.cpp
 	src/modules.h
+
+	src/uri/schemas.cpp
+	src/uri/file_schema.cpp
 	
 	src/modules/mod_log.c)
 
@@ -21,6 +24,8 @@ ADD_LIBRARY(SSCore
 	SHARED
 	${LOCAL_SOURCES_FILES}
 )
+
+#TARGET_LINK_LIBRARIES(SSCore UriParser)
 
 IF(SS_HAVE_OUTPUT_DIRECTORY)
 	SET_TARGET_PROPERTIES(

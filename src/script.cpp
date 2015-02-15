@@ -8,6 +8,7 @@
 #include <ssengine/macros.h>
 #include <ssengine/log.h>
 
+//TODO: avoid to use static variable here.
 static lua_State* s_context = NULL;
 
 void ss_preload_module(const char* name, lua_CFunction func){

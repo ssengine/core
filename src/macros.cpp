@@ -28,6 +28,7 @@ struct ss_macro{
 	void eval();
 };
 
+//TODO: avoid to use static variable here.
 static std::map<std::string, ss_macro> s_map_macros;
 
 void ss_macro::eval(){
