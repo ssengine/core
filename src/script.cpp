@@ -20,9 +20,15 @@ void ss_preload_module(const char* name, lua_CFunction func){
 	lua_pop(L, 2);
 }
 
+extern "C" int ss_module_uri_loader(lua_State *L);
+
 static void ss_init_lua_libs(lua_State *L){
 	luaL_openlibs(L);
 	ss_preload_module("log", ss_module_log);
+	
+	lua_pushcfunction(L, ss_module_uri_loader);
+	lua_call(L, 0, 0);
+
 }
 
 lua_State* ss_init_script_context(){
@@ -70,7 +76,7 @@ void ss_safe_call(lua_State* L, int nargs, int nrets){
 	int base = lua_gettop(L) - nargs - 1;
 
 	if (lua_isnil(L, -1)){
-		// call without a handler(error ignored).
+		// call without a handler(error logged).
 		lua_pop(L, 1);
 		if (lua_pcall(L, nargs, nrets, 0) != 0){
 			// with errors

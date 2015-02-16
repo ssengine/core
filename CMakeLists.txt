@@ -17,7 +17,8 @@ SET(LOCAL_SOURCES_FILES
 	src/uri/file_schema.cpp
 	src/uri/schemas.h
 	
-	src/modules/mod_log.c)
+	src/modules/mod_log.c
+	src/modules/mod_uri_loader.cpp)
 
 LINK_LIBRARIES(${SS_LUA_LIBNAME})
 LINK_DIRECTORIES(${LUA_LIB})
