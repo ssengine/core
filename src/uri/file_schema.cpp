@@ -1,4 +1,5 @@
 #include <ssengine/uri.h>
+#include "schemas.h"
 
 #ifdef WIN32
 #include <sys/stat.h>
@@ -8,18 +9,19 @@
 #endif
 
 //TODO: support file that more than 2G
-//TODO: support chinese file name
+//TODO: support chinese file name(use UNICODE API)
+//TODO: use uri.to_path() instead of path.c_str()+1
 
-static bool file_is_local(){
+bool ss_file_schema_handler::is_local(){
 	return true;
 }
 
-static bool file_is_exists(const ss_uri& uri){
+bool ss_file_schema_handler::exists(const ss_uri& uri){
 	struct stat st;
 	return stat(uri.path.c_str() + 1, &st) == 0;
 }
 
-static bool file_is_file(const ss_uri& uri){
+bool ss_file_schema_handler::is_file(const ss_uri& uri){
 	struct stat st;
 	if (stat(uri.path.c_str() + 1, &st) != 0){
 		return false;
@@ -27,7 +29,7 @@ static bool file_is_file(const ss_uri& uri){
 	return (st.st_mode & S_IFMT) == S_IFREG;
 }
 
-static bool file_is_directory(const ss_uri& uri)
+bool ss_file_schema_handler::is_directory(const ss_uri& uri)
 {
 	struct stat st;
 	if (stat(uri.path.c_str() + 1, &st) != 0)
@@ -37,7 +39,7 @@ static bool file_is_directory(const ss_uri& uri)
 	return (st.st_mode & S_IFMT) == S_IFDIR;
 }
 
-static bool file_mkdir(const ss_uri& uri)
+bool ss_file_schema_handler::mkdir(const ss_uri& uri)
 {
 	return _mkdir(uri.path.c_str() + 1) == 0;
 }
@@ -45,7 +47,7 @@ static bool file_mkdir(const ss_uri& uri)
 struct file_input_stream : input_stream
 {
 	file_input_stream(FILE* f)
-		: _f(f)
+	: _f(f)
 	{
 	}
 	~file_input_stream()
@@ -128,7 +130,7 @@ size_t file_output_stream::write(const void* buf, size_t sz)
 	return fwrite(buf, 1, sz, _f);
 }
 
-static struct input_stream* file_open_for_read(const ss_uri& uri)
+struct input_stream* ss_file_schema_handler::open_for_read(const ss_uri& uri)
 {
 	FILE* f = fopen(uri.path.c_str() + 1, "rb");
 	if (f){
@@ -137,7 +139,7 @@ static struct input_stream* file_open_for_read(const ss_uri& uri)
 	return NULL;
 }
 
-static struct output_stream* file_open_for_write(const ss_uri& uri)
+struct output_stream* ss_file_schema_handler::open_for_write(const ss_uri& uri)
 {
 	FILE* f = fopen(uri.path.c_str() + 1, "wb");
 	if (f){
@@ -146,7 +148,7 @@ static struct output_stream* file_open_for_write(const ss_uri& uri)
 	return NULL;
 }
 
-static struct output_stream* file_open_for_append(const ss_uri& uri)
+struct output_stream* ss_file_schema_handler::open_for_append(const ss_uri& uri)
 {
 	FILE* f = fopen(uri.path.c_str() + 1, "ab");
 	if (f){
@@ -154,14 +156,3 @@ static struct output_stream* file_open_for_append(const ss_uri& uri)
 	}
 	return NULL;
 }
-
-struct ss_uri_schema_handler file_schema_handler = {
-	file_is_local,
-	file_is_exists,
-	file_is_file,
-	file_is_directory,
-	file_open_for_read,
-	file_mkdir,
-	file_open_for_write,
-	file_open_for_append
-};

@@ -15,6 +15,7 @@ SET(LOCAL_SOURCES_FILES
 	src/uri/uri.cpp
 	src/uri/schemas.cpp
 	src/uri/file_schema.cpp
+	src/uri/schemas.h
 	
 	src/modules/mod_log.c)
 

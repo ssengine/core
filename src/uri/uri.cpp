@@ -1,6 +1,7 @@
 #include <ssengine/uri.h>
 
 #include <regex>
+#include <sstream>
 
 //(?:(?<protocol>http(?:s?)|ftp)(?:\:\/\/)) 
 // (?:(?<usrpwd>\w+\:\w+)(?:\@))? 
@@ -11,8 +12,9 @@
 
 static std::regex reg(
 	"(?:(\\w+)\\:\\/\\/"			//schema
-		"(?:(\\w+)(?:\\:(\\w+))?\\@)?" 	//user & password
-		"(?:([\\w\\.]+)(?:\\:(\\d+))?)?"	//host & port
+	"(?:"
+	"(?:(\\w+)(?:\\:(\\w+))?\\@)?" 	//user & password
+	"([\\w\\.]+)(?:\\:(\\d+))?)?"	//host & port
 	"(?=\\/))?"
 	"([^\\?\\#]+)"					//path
 	"(?:\\?([^\\#]+))?"				//search
@@ -46,12 +48,12 @@ static std::regex reg(
 ss_uri ss_uri::from_file(const char* path){
 	wchar_t* wPath = char2wchar_t(path);
 
-	wchar_t wOutPath[MAX_PATH+1];
+	wchar_t wOutPath[MAX_PATH + 1];
 
 	wchar_t sUrl[INTERNET_MAX_URL_LENGTH + 1];
 	DWORD sz = INTERNET_MAX_URL_LENGTH + 1;
 
-	if (!PathIsNetworkPathW(wPath) &&  PathGetDriveNumberW(wPath) < 0){
+	if (!PathIsNetworkPathW(wPath) && PathGetDriveNumberW(wPath) < 0){
 		GetCurrentDirectoryW(MAX_PATH + 1, wOutPath);
 		PathAppendW(wOutPath, wPath);
 		UrlCreateFromPathW(wOutPath, sUrl, &sz, NULL);
@@ -59,7 +61,7 @@ ss_uri ss_uri::from_file(const char* path){
 	else {
 		UrlCreateFromPathW(wPath, sUrl, &sz, NULL);
 	}
-	
+
 	delete[] wPath;
 	return ss_uri::parse(wstring2string(sUrl));
 }
@@ -73,9 +75,9 @@ ss_uri ss_uri::from_file(const char* path){
 }
 #endif
 
-ss_uri ss_uri::join(const ss_uri& other){
+ss_uri ss_uri::join(const ss_uri& other) const{
 
-	if (other.schema.length() > 0){
+	if (!other.schema.empty()){
 		// absolute path
 		return other;
 	}
@@ -85,7 +87,7 @@ ss_uri ss_uri::join(const ss_uri& other){
 	ret.search = other.search;
 	ret.tag = other.tag;
 
-	if (other.path.length() > 0 && other.path[0] == '/'){
+	if (!other.path.empty() && other.path[0] == '/'){
 		ret.path = other.path;
 	}
 	else {
@@ -94,23 +96,25 @@ ss_uri ss_uri::join(const ss_uri& other){
 	return ret;
 }
 
-ss_uri ss_uri::normalize(){
+void ss_uri::normalize(){
 	std::vector<std::string> parts;
 
 	size_t begin = 0;
 
+	bool isAbsolute = (!schema.empty()) || (path.length() > 0 && path[0] == '/');
+
 	for (;;){
 		size_t pos = path.find('/', begin);
 
-		std::string part = path.substr(begin, pos-begin);
+		std::string part = path.substr(begin, pos - begin);
 		if (part == "" || part == "."){
 		}
 		else if (part == ".."){
 			if (parts.size() > 0){
 				parts.pop_back();
 			}
-			else if (schema.length() > 0){
-				// ignore leading .. if there's schema
+			else if (isAbsolute){
+				// Ignore leading `..` if it's a absolute path.
 			}
 			else {
 				parts.push_back(part);
@@ -125,8 +129,8 @@ ss_uri ss_uri::normalize(){
 		}
 		begin = pos + 1;
 	}
-	
-	std::string ret;
+
+	std::string ret = isAbsolute ? "/" : "";
 	auto it = parts.begin();
 	ret.append(*it);
 	for (++it; it != parts.end(); ++it){
@@ -134,13 +138,17 @@ ss_uri ss_uri::normalize(){
 		ret.append(*it);
 	}
 
-	ss_uri retUri = *this;
-	retUri.path = ret;
-	return retUri;
+	if (ret.length() == 0){
+		this->path = ".";
+	}
+	else {
+		this->path = ret;
+	}
 }
 
-ss_uri ss_uri::base_dir(){
-	ss_uri ret = normalize();
+ss_uri ss_uri::base_dir() const{
+	ss_uri ret = (*this);
+	ret.normalize();
 
 	size_t pos = ret.path.rfind("/");
 	if (pos == std::string::npos){
@@ -153,6 +161,37 @@ ss_uri ss_uri::base_dir(){
 	else {
 		ret.path = ret.path.substr(0, pos);
 	}
-	
+
 	return ret;
+}
+
+std::string ss_uri::str() const{
+	std::ostringstream out;
+
+	if (!schema.empty()){
+		out << schema << "://";
+		if (!host.empty()){
+			if (!user.empty()){
+				out << user;
+				if (!password.empty()){
+					out << ":" << password;
+				}
+				out << "@";
+			}
+			out << host;
+			if (port > 0){
+				out << ":" << port;
+			}
+		}
+	}
+	out << path;
+
+	if (!search.empty()){
+		out << "?" << search;
+	}
+	if (!tag.empty()){
+		out << "#" << tag;
+	}
+
+	return out.str();
 }
