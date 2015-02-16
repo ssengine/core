@@ -8,6 +8,7 @@
 #endif
 
 //TODO: support file that more than 2G
+//TODO: support chinese file name
 
 static bool file_is_local(){
 	return true;

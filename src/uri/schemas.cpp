@@ -16,8 +16,8 @@ void ss_uri_init_schemas(){
 }
 
 bool ss_uri_exists(const char* uri){
-	ss_uri u = network::ParseUri(uri);
-	auto itor = s_schemas.find(u.protocol);
+	ss_uri u = ss_uri::parse(uri);
+	auto itor = s_schemas.find(u.schema);
 	if (itor == s_schemas.end()){
 		return false;
 	}
@@ -25,8 +25,8 @@ bool ss_uri_exists(const char* uri){
 }
 
 bool ss_uri_is_file(const char* uri){
-	ss_uri u = network::ParseUri(uri);
-	auto itor = s_schemas.find(u.protocol);
+	ss_uri u = ss_uri::parse(uri);
+	auto itor = s_schemas.find(u.schema);
 	if (itor == s_schemas.end()){
 		return false;
 	}
@@ -34,8 +34,8 @@ bool ss_uri_is_file(const char* uri){
 }
 
 bool ss_uri_is_directory(const char* uri){
-	ss_uri u = network::ParseUri(uri);
-	auto itor = s_schemas.find(u.protocol);
+	ss_uri u = ss_uri::parse(uri);
+	auto itor = s_schemas.find(u.schema);
 	if (itor == s_schemas.end()){
 		return false;
 	}
@@ -43,8 +43,8 @@ bool ss_uri_is_directory(const char* uri){
 }
 
 bool ss_uri_mkdir(const char* uri){
-	ss_uri u = network::ParseUri(uri);
-	auto itor = s_schemas.find(u.protocol);
+	ss_uri u = ss_uri::parse(uri);
+	auto itor = s_schemas.find(u.schema);
 	if (itor == s_schemas.end()){
 		return false;
 	}
@@ -52,8 +52,8 @@ bool ss_uri_mkdir(const char* uri){
 }
 
 input_stream* ss_uri_open_for_read(const char* uri){
-	ss_uri u = network::ParseUri(uri);
-	auto itor = s_schemas.find(u.protocol);
+	ss_uri u = ss_uri::parse(uri);
+	auto itor = s_schemas.find(u.schema);
 	if (itor == s_schemas.end()){
 		return nullptr;
 	}
@@ -61,8 +61,8 @@ input_stream* ss_uri_open_for_read(const char* uri){
 }
 
 output_stream* ss_uri_open_for_write(const char* uri){
-	ss_uri u = network::ParseUri(uri);
-	auto itor = s_schemas.find(u.protocol);
+	ss_uri u = ss_uri::parse(uri);
+	auto itor = s_schemas.find(u.schema);
 	if (itor == s_schemas.end()){
 		return nullptr;
 	}
@@ -70,8 +70,8 @@ output_stream* ss_uri_open_for_write(const char* uri){
 }
 
 output_stream* ss_uri_open_for_append(const char* uri){
-	ss_uri u = network::ParseUri(uri);
-	auto itor = s_schemas.find(u.protocol);
+	ss_uri u = ss_uri::parse(uri);
+	auto itor = s_schemas.find(u.schema);
 	if (itor == s_schemas.end()){
 		return nullptr;
 	}
