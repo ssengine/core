@@ -86,6 +86,23 @@ static const char *searchpath(lua_State *L, const char *name,
 	return NULL;  /* not found */
 }
 
+static const char * searchuri(lua_State *L, const char *name, const char *path) {
+	luaL_Buffer msg; /* to build error message */
+	luaL_buffinit(L, &msg);
+	while ((path = pushnexttemplate(L, path)) != NULL) {
+		const char *filename = luaL_gsub(L, lua_tostring(L, -1),
+			LUA_PATH_MARK, name);
+		lua_remove(L, -2); /* remove path template */
+		if (readable(filename))
+			return filename;
+		lua_pushfstring(L, "\n\tno file " LUA_QS, filename);
+		lua_remove(L, -2); /* remove file name */
+		luaL_addvalue(&msg); /* concatenate error msg. */
+	}
+	luaL_pushresult(&msg); /* create error message */
+	return NULL; /* not found */
+}
+
 static const char *findfile(lua_State *L, const char *name,
 	const char *pname)
 {
@@ -94,6 +111,9 @@ static const char *findfile(lua_State *L, const char *name,
 	path = lua_tostring(L, -1);
 	if (path == NULL)
 		luaL_error(L, LUA_QL("package.%s") " must be a string", pname);
+
+	if (strchr(name, '/') != NULL)
+		return searchuri(L, name, path);
 	return searchpath(L, name, path, ".", LUA_DIRSEP);
 }
 
@@ -139,6 +159,51 @@ static int douri(lua_State* L){
 	return lua_gettop(L) - base;
 }
 
+static const char *findmodule(lua_State *L, const char *name,
+	const char *pname)
+{
+	const char *path;
+	lua_getglobal(L, "package");
+	lua_getfield(L, -1, pname);
+	path = lua_tostring(L, -1);
+	lua_pop(L, 2);
+	if (path == NULL)
+		luaL_error(L, LUA_QL("package.%s") " must be a string", pname);
+
+	if (strchr(name, '/') != NULL)
+		return searchuri(L, name, path);
+	return searchpath(L, name, path, ".", LUA_DIRSEP);
+}
+
+static int loadmodule(lua_State *L) {
+	const char *fname = lua_tostring(L, 1);
+	const char *mode = luaL_optstring(L, 2, NULL);
+	const char *uri = findmodule(L, fname, "path");
+	if (uri == NULL)
+		return 1; /* module not found. */
+
+	lua_pushnil(L);
+	int status = luaL_loadurix(L, uri, mode);
+	if (status == 0)
+		return 1;
+	return 2;
+}
+
+static int domodule(lua_State *L) {
+	const char *fname = lua_tostring(L, 1);
+	const char *mode = luaL_optstring(L, 2, NULL);
+	const char *uri = findmodule(L, fname, "path");
+	if (uri == NULL)
+		return 1; /* module not found. */
+
+	int status = luaL_loadurix(L, uri, mode);
+	if (status != 0)
+		lua_error(L);
+	int base = lua_gettop(L) - 1;
+	lua_call(L, 0, LUA_MULTRET);
+	return lua_gettop(L) - base;
+}
+
 extern "C" int ss_module_uri_loader(lua_State *L){
 	lua_getglobal(L, "package");
 #if LUA_VERSION_NUM > 502
@@ -156,6 +221,12 @@ extern "C" int ss_module_uri_loader(lua_State *L){
 
 	lua_pushcfunction(L, douri);
 	lua_setglobal(L, "douri");
+
+	lua_pushcfunction(L, loadmodule);
+	lua_setglobal(L, "loadmodule");
+
+	lua_pushcfunction(L, domodule);
+	lua_setglobal(L, "domodule");
 
 	return 0;
 }
