@@ -86,21 +86,19 @@ static const char *searchpath(lua_State *L, const char *name,
 	return NULL;  /* not found */
 }
 
-static const char * searchuri(lua_State *L, const char *name, const char *path) {
-	luaL_Buffer msg; /* to build error message */
-	luaL_buffinit(L, &msg);
-	while ((path = pushnexttemplate(L, path)) != NULL) {
-		const char *filename = luaL_gsub(L, lua_tostring(L, -1),
-			LUA_PATH_MARK, name);
-		lua_remove(L, -2); /* remove path template */
-		if (readable(filename))
-			return filename;
-		lua_pushfstring(L, "\n\tno file " LUA_QS, filename);
-		lua_remove(L, -2); /* remove file name */
-		luaL_addvalue(&msg); /* concatenate error msg. */
-	}
-	luaL_pushresult(&msg); /* create error message */
-	return NULL; /* not found */
+static int searchuri(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1); 
+    const char *path = luaL_checkstring(L, 2);
+    const char *sep = luaL_optstring(L, 3, ".");
+
+    const char *uri = searchpath(L, name, path, sep, "/");
+    if (uri != NULL)
+        return 1;
+    else {
+        lua_pushnil(L);
+        lua_insert(L, -2);
+        return 2; /* return nil and error message, just like package.searchpath. */
+    }
 }
 
 static const char *findfile(lua_State *L, const char *name,
@@ -111,9 +109,6 @@ static const char *findfile(lua_State *L, const char *name,
 	path = lua_tostring(L, -1);
 	if (path == NULL)
 		luaL_error(L, LUA_QL("package.%s") " must be a string", pname);
-
-	if (strchr(name, '/') != NULL)
-		return searchuri(L, name, path);
 	return searchpath(L, name, path, ".", LUA_DIRSEP);
 }
 
@@ -170,8 +165,6 @@ static const char *findmodule(lua_State *L, const char *name,
 	if (path == NULL)
 		luaL_error(L, LUA_QL("package.%s") " must be a string", pname);
 
-	if (strchr(name, '/') != NULL)
-		return searchuri(L, name, path);
 	return searchpath(L, name, path, ".", LUA_DIRSEP);
 }
 
@@ -214,6 +207,11 @@ extern "C" int ss_module_uri_loader(lua_State *L){
 	lua_pushvalue(L, -2);
 	lua_pushcclosure(L, package_loader_lua, 1);
 	lua_rawseti(L, -2, 2);
+
+    lua_pushstring(L, "searchuri");
+    lua_pushcfunction(L, searchuri);
+    lua_rawset(L, 1);
+
 	lua_pop(L, 2);
 
 	lua_pushcfunction(L, loaduri);
