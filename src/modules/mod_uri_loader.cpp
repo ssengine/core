@@ -194,16 +194,20 @@ static void findloader(lua_State *L, const char *name) {
 
 static int loadmodule(lua_State *L) {
     const char *name = luaL_checkstring(L, 1);
-    findloader(L, name);
-    return 2; /* return [loader function] + [module name] */
+    findloader(L, name); /* 3 items were pushed onto stack. (-3)[searchers] + (-2)[loader-func] + (-1)[modname] */
+    lua_remove(L, -3);
+    return 2; /* return [loader-func] + [modname] */
 }
 
 static int domodule(lua_State *L) {
+    int nargs = lua_gettop(L) - 1;
     const char *name = luaL_checkstring(L, 1);
     findloader(L, name);
-    lua_insert(L, -2);
-    int base = lua_gettop(L) - 1;
-    lua_call(L, 0, LUA_MULTRET);
+    lua_remove(L, -3);
+    lua_pop(L, 1);
+    lua_replace(L, 1);
+    int base = lua_gettop(L) - nargs - 1;
+    lua_call(L, nargs, LUA_MULTRET);
     return lua_gettop(L) - base; 
 }
 
