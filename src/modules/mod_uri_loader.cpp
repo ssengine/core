@@ -14,16 +14,12 @@ static const char *reader_uri(lua_State *L, void *ud, size_t *size)
 	return *size > 0 ? ctx->buf : NULL;
 }
 
-int luaL_loaduri(lua_State* L, const char* uri){
-	return luaL_loadurix(L, uri, NULL);
-}
-
 int luaL_loadurix(lua_State* L, const char* uri, const char* mode){
 	UriReaderCtx ctx;
 	int status;
 	const char *chunkname;
 
-	ctx.fp = ss_uri_open_for_read(uri);
+	ctx.fp = ss_uri_open_for_read(ss_lua_get_core_context(L), uri);
 	if (ctx.fp == NULL) {
 		lua_pushfstring(L, "cannot open %s", uri);
 		return LUA_ERRFILE;
@@ -38,8 +34,12 @@ int luaL_loadurix(lua_State* L, const char* uri, const char* mode){
 	return status;
 }
 
-static int readable(const char* uri){
-	struct input_stream* is = ss_uri_open_for_read(uri);
+int luaL_loaduri(lua_State* L, const char* uri){
+	return luaL_loadurix(L, uri, NULL);
+}
+
+static int readable(ss_core_context* C, const char* uri){
+	struct input_stream* is = ss_uri_open_for_read(C, uri);
 	if (!is){
 		return 0;
 	}
@@ -68,6 +68,8 @@ static const char *searchpath(lua_State *L, const char *name,
 	const char *path, const char *sep,
 	const char *dirsep)
 {
+	ss_core_context* C = ss_lua_get_core_context(L);
+
 	luaL_Buffer msg;  /* to build error message */
 	luaL_buffinit(L, &msg);
 	if (*sep != '\0')  /* non-empty separator? */
@@ -76,7 +78,7 @@ static const char *searchpath(lua_State *L, const char *name,
 		const char *filename = luaL_gsub(L, lua_tostring(L, -1),
 			LUA_PATH_MARK, name);
 		lua_remove(L, -2);  /* remove path template */
-		if (readable(filename))  /* does file exist and is readable? */
+		if (readable(C, filename))  /* does file exist and is readable? */
 			return filename;  /* return that file name */
 		lua_pushfstring(L, "\n\tno file " LUA_QS, filename);
 		lua_remove(L, -2);  /* remove file name */
@@ -195,7 +197,6 @@ static void findloader(lua_State *L, const char *name) {
 static int loadmodule(lua_State *L) {
     const char *name = luaL_checkstring(L, 1);
     findloader(L, name); /* 3 items were pushed onto stack. (-3)[searchers] + (-2)[loader-func] + (-1)[modname] */
-    lua_remove(L, -3);
     return 2; /* return [loader-func] + [modname] */
 }
 
@@ -206,9 +207,8 @@ static int domodule(lua_State *L) {
     lua_remove(L, -3);
     lua_pop(L, 1);
     lua_replace(L, 1);
-    int base = lua_gettop(L) - nargs - 1;
     lua_call(L, nargs, LUA_MULTRET);
-    return lua_gettop(L) - base; 
+    return lua_gettop(L); 
 }
 
 extern "C" int ss_module_uri_loader(lua_State *L){

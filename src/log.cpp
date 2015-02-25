@@ -3,7 +3,8 @@
 #include <ssengine/log.h>
 #include <vector>
 
-std::vector<ss_logger*>  loggers;
+//TODO: It's hard to remove this one:
+static std::vector<ss_logger*>  loggers;
 
 //TODO: lock loggers list while logging (in same thread);
 //TODO: use spin_lock for _ss_log and add_logger/remove_logger.

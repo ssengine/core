@@ -6,11 +6,13 @@ ADD_DEFINITIONS(-DBUILDING_SS_CORE)
 
 SET(LOCAL_SOURCES_FILES
 	src/script.cpp
-	src/core.c
+	src/core.cpp
 	src/core.h
 	src/log.cpp
 	src/macros.cpp
 	src/modules.h
+
+	src/math/matrix.cpp
 
 	src/uri/uri.cpp
 	src/uri/schemas.cpp
