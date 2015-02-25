@@ -86,6 +86,21 @@ static const char *searchpath(lua_State *L, const char *name,
 	return NULL;  /* not found */
 }
 
+static int searchuri(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1); 
+    const char *path = luaL_checkstring(L, 2);
+    const char *sep = luaL_optstring(L, 3, ".");
+
+    const char *uri = searchpath(L, name, path, sep, "/");
+    if (uri != NULL)
+        return 1;
+    else {
+        lua_pushnil(L);
+        lua_insert(L, -2);
+        return 2; /* return nil + error message */
+    }
+}
+
 static const char *findfile(lua_State *L, const char *name,
 	const char *pname)
 {
@@ -139,6 +154,59 @@ static int douri(lua_State* L){
 	return lua_gettop(L) - base;
 }
 
+/* From lua5.2 loadlib.c but was modified a little. */
+static void findloader(lua_State *L, const char *name) {
+    int i;
+    luaL_Buffer msg;  /* to build error message */
+    luaL_buffinit(L, &msg);
+
+    lua_getglobal(L, "package");
+#if LUA_VERSION_NUM > 502
+    lua_getfield(L, -1, "searchers");
+#else
+    lua_getfield(L, -1, "loaders");
+#endif
+    lua_remove(L, -2); /* remove "package" */
+
+    if (!lua_istable(L, -1))
+        luaL_error(L, LUA_QL("package.searchers") " must be a table");
+    /*  iterate over available searchers to find a loader */
+    for (i = 1;; i++) {
+        lua_rawgeti(L, -1, i);  /* get a searcher */
+        if (lua_isnil(L, -1)) {  /* no more searchers? */
+            lua_pop(L, 1);  /* remove nil */
+            luaL_pushresult(&msg);  /* create error message */
+            luaL_error(L, "module " LUA_QS " not found:%s",
+                name, lua_tostring(L, -1));
+        }
+        lua_pushstring(L, name);
+        lua_call(L, 1, 2);  /* call it */
+        if (lua_isfunction(L, -2))  /* did it find a loader? */
+            return;  /* module loader found */
+        else if (lua_isstring(L, -2)) {  /* searcher returned error message? */
+            lua_pop(L, 1);  /* remove extra return */
+            luaL_addvalue(&msg);  /* concatenate error message */
+        }
+        else
+            lua_pop(L, 2);  /* remove both returns */
+    }
+}
+
+static int loadmodule(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1);
+    findloader(L, name);
+    return 2; /* return [loader function] + [module name] */
+}
+
+static int domodule(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1);
+    findloader(L, name);
+    lua_insert(L, -2);
+    int base = lua_gettop(L) - 1;
+    lua_call(L, 0, LUA_MULTRET);
+    return lua_gettop(L) - base; 
+}
+
 extern "C" int ss_module_uri_loader(lua_State *L){
 	lua_getglobal(L, "package");
 #if LUA_VERSION_NUM > 502
@@ -149,6 +217,11 @@ extern "C" int ss_module_uri_loader(lua_State *L){
 	lua_pushvalue(L, -2);
 	lua_pushcclosure(L, package_loader_lua, 1);
 	lua_rawseti(L, -2, 2);
+
+    lua_pushstring(L, "searchuri");
+    lua_pushcfunction(L, searchuri);
+    lua_rawset(L, 1);
+
 	lua_pop(L, 2);
 
 	lua_pushcfunction(L, loaduri);
@@ -156,6 +229,12 @@ extern "C" int ss_module_uri_loader(lua_State *L){
 
 	lua_pushcfunction(L, douri);
 	lua_setglobal(L, "douri");
+
+	lua_pushcfunction(L, loadmodule);
+	lua_setglobal(L, "loadmodule");
+
+	lua_pushcfunction(L, domodule);
+	lua_setglobal(L, "domodule");
 
 	return 0;
 }
