@@ -20,13 +20,13 @@ static std::regex reg(
 	"(?:\\?([^\\#]+))?"				//search
 	"(?:\\#+(.+))?");				//tag
 
-/*static*/ ss_uri ss_uri::parse(const std::string& uri){
+/*static*/ ss_uri ss_uri::parse(ss_core_context* C, const std::string& uri){
 	std::cmatch match;
 	if (!std::regex_match(uri.c_str(), uri.c_str() + uri.length(), match, reg)){
-		return ss_uri();
+		return ss_uri(C);
 	}
 
-	ss_uri ret;
+	ss_uri ret(C);
 	ret.schema = match[1].str();
 	ret.user = match[2].str();
 	ret.password = match[3].str();
@@ -45,7 +45,7 @@ static std::regex reg(
 
 #pragma comment(lib, "Shlwapi.lib")
 
-ss_uri ss_uri::from_file(const char* path){
+ss_uri ss_uri::from_file(ss_core_context* C,  const char* path){
 	wchar_t* wPath = char2wchar_t(path);
 
 	wchar_t wOutPath[MAX_PATH + 1];
@@ -63,10 +63,10 @@ ss_uri ss_uri::from_file(const char* path){
 	}
 
 	delete[] wPath;
-	return ss_uri::parse(wstring2string(sUrl));
+	return ss_uri::parse(C, wstring2string(sUrl));
 }
 #else
-/*static*/ ss_uri ss_uri::from_file(const char* path){
+/*static*/ ss_uri ss_uri::from_file(ss_core_context* C, const char* path){
 	ss_uri ret;
 
 	bool isAbsolute = (path[0] == '/');

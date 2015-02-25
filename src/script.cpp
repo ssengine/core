@@ -8,11 +8,7 @@
 #include <ssengine/macros.h>
 #include <ssengine/log.h>
 
-//TODO: avoid to use static variable here.
-static lua_State* s_context = NULL;
-
-void ss_preload_module(const char* name, lua_CFunction func){
-	lua_State* L = s_context;
+void ss_lua_preload_module(lua_State *L, const char* name, lua_CFunction func){
 	lua_getglobal(L, "package");
 	lua_getfield(L, -1, "preload");
 	lua_pushcfunction(L, func);
@@ -24,37 +20,47 @@ extern "C" int ss_module_uri_loader(lua_State *L);
 
 static void ss_init_lua_libs(lua_State *L){
 	luaL_openlibs(L);
-	ss_preload_module("log", ss_module_log);
+	ss_lua_preload_module(L, "log", ss_module_log);
 	
 	lua_pushcfunction(L, ss_module_uri_loader);
 	lua_call(L, 0, 0);
 
 }
 
-lua_State* ss_init_script_context(){
-	assert(s_context == NULL);
-	s_context = luaL_newstate();
+static int s_tag_core_context = 0;
 
-	ss_init_lua_libs(s_context);
-	return s_context;
-}
-
-void ss_destroy_script_context(){
-	assert(s_context != NULL);
-	lua_close(s_context);
-	s_context = NULL;
-}
-
-lua_State* ss_get_script_context(){
-	assert(s_context != NULL);
-	return s_context;
-}
-
-void ss_run_script_from_macro(const char* name, int nargs, int nrets){
-	lua_State* L = s_context;
+void _ss_init_script_context(ss_core_context* C){
+	lua_State* L = C->L = luaL_newstate();
 	
-	ss_macro_eval(name);
-	if (luaL_loadstring(L, ss_macro_get_content(name).c_str()) != 0){
+	lua_pushlightuserdata(L, &s_tag_core_context);
+	lua_pushlightuserdata(L, C);
+	lua_rawset(L, LUA_REGISTRYINDEX);
+
+	ss_init_lua_libs(L);
+}
+
+void _ss_destroy_script_context(ss_core_context* C){
+	lua_close(C->L);
+	C->L = NULL;
+}
+
+lua_State* ss_get_script_context(ss_core_context* C){
+	return C->L;
+}
+
+ss_core_context* ss_lua_get_core_context(lua_State* L){
+	lua_pushlightuserdata(L, &s_tag_core_context);
+	lua_rawget(L, LUA_REGISTRYINDEX);
+	void* ret = lua_touserdata(L, -1);
+	lua_pop(L, 1);
+	return (ss_core_context*)(ret);
+}
+
+void ss_run_script_from_macro(ss_core_context* C, const char* name, int nargs, int nrets){
+	lua_State* L = C->L;
+	
+	ss_macro_eval(C, name);
+	if (luaL_loadstring(L, ss_macro_get_content(C, name).c_str()) != 0){
 		// with Error
 		SS_LOGE("%s", lua_tostring(L, -1));
 		lua_pop(L, 1);

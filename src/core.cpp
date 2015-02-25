@@ -35,3 +35,18 @@ char* wchar_t2char(const wchar_t* str)
 
 	return buf;
 }
+
+//TODO: move these to constructor/destructor.
+
+ss_core_context* ss_create_context(){
+	ss_core_context* C = new ss_core_context();
+	_ss_uri_init_schemas(C);
+	_ss_init_script_context(C);
+	return C;
+}
+
+void ss_destroy_context(ss_core_context* C){
+	_ss_destroy_script_context(C);
+	_ss_release_schemas(C);
+	delete C;
+}
