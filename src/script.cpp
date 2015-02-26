@@ -69,12 +69,12 @@ void ss_run_script_from_macro(ss_core_context* C, const char* name, int nargs, i
 	if (nargs){
 		lua_insert(L, -nargs - 1);
 	}
-	ss_safe_call(L, nargs, nrets);
+	ss_lua_safe_call(L, nargs, nrets);
 }
 
 static int tag_error_handler = 0;
 
-void ss_safe_call(lua_State* L, int nargs, int nrets){
+void ss_lua_safe_call(lua_State* L, int nargs, int nrets){
 	// get error handler
 	lua_pushlightuserdata(L, &tag_error_handler);
 	lua_rawget(L, LUA_REGISTRYINDEX);

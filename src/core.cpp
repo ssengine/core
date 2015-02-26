@@ -1,4 +1,5 @@
 #include "core.h"
+#include "render/draw_batch.h"
 
 //define DllMain for windows
 #ifdef WIN32
@@ -36,17 +37,41 @@ char* wchar_t2char(const wchar_t* str)
 	return buf;
 }
 
-//TODO: move these to constructor/destructor.
-
 ss_core_context* ss_create_context(){
 	ss_core_context* C = new ss_core_context();
-	_ss_uri_init_schemas(C);
-	_ss_init_script_context(C);
 	return C;
 }
 
 void ss_destroy_context(ss_core_context* C){
-	_ss_destroy_script_context(C);
-	_ss_release_schemas(C);
 	delete C;
 }
+
+ss_core_context::ss_core_context()
+	: L(nullptr), renderer(0), draw_batch(nullptr)
+{
+	_ss_uri_init_schemas(this);
+	_ss_init_script_context(this);
+
+	//TODO: define core macros
+}
+
+ss_core_context::~ss_core_context(){
+	_ss_destroy_script_context(this);
+	_ss_release_schemas(this);
+}
+
+SS_CORE_API ss_render_device*  ss_get_render_device(ss_core_context* C){
+	return C->renderer;
+}
+
+SS_CORE_API void ss_set_render_device(ss_core_context* C, ss_render_device* device){
+	//TODO: use null device if there's no device.
+	if (C->draw_batch){
+		delete C->draw_batch;
+	}
+	C->renderer = device;
+	if (device){
+		C->draw_batch = new ss_draw_batch(device);
+	}
+}
+
