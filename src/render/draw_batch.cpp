@@ -23,7 +23,7 @@ ss_draw_batch::ss_draw_batch(ss_render_device* _device)
 		device->get_predefined_technique(SS_PDT_STANDARD_NO_TEXTURE)
 		->create_input_layout(layout_elements, 2);
 
-	il = device->get_predefined_technique(SS_PDT_STANDARD)
+	il_texture = device->get_predefined_technique(SS_PDT_STANDARD)
 		->create_input_layout(layout_elements, 3);
 
 	// Create vertex buffers;
@@ -43,6 +43,9 @@ ss_draw_batch::~ss_draw_batch()
 	delete[] ptr_texcoord;
 	delete[] ptr_diffuse;
 	delete[] ptr_position;
+
+	delete il_texture;
+	delete il_notexture;
 }
 
 void ss_draw_batch::prepare(ss_primitive_type pt, size_t count)
@@ -62,15 +65,16 @@ void ss_draw_batch::prepare(ss_render_technique* _tech, ss_primitive_type _pt, s
 {
 	if (tech != _tech || il != il_notexture || pt != _pt || count + size > MAX_VERTEX_COUNT){
 		flush();
-	}
-	// Do not bind texcoord
-	il = il_notexture;
-	tech = _tech;
-	pt = _pt;
 
-	device->set_input_layout(il);
-	device->set_primitive_type(pt);
-	device->set_vertex_buffer(0, 2, buffers, s_strides, s_offsets);
+		// Do not bind texcoord
+		il = il_notexture;
+		tech = _tech;
+		pt = _pt;
+
+		device->set_input_layout(il);
+		device->set_primitive_type(pt);
+		device->set_vertex_buffer(0, 2, buffers, s_strides, s_offsets);
+	}
 
 	offset = size;
 	size += count;
@@ -80,16 +84,17 @@ void ss_draw_batch::prepare(ss_render_technique* _tech, ss_texture2d* _texture, 
 {
 	if (tech != _tech || il != il_texture || pt != _pt || texture != _texture || count + size > MAX_VERTEX_COUNT){
 		flush();
-	}
-	il = il_texture;
-	tech = _tech;
-	texture = _texture;
-	pt = _pt;
 
-	device->set_input_layout(il);
-	device->set_primitive_type(pt);
-	device->set_vertex_buffer(0, 3, buffers, s_strides, s_offsets);
-	device->set_ps_texture2d_resource(0, 1, &texture);
+		il = il_texture;
+		tech = _tech;
+		texture = _texture;
+		pt = _pt;
+
+		device->set_input_layout(il);
+		device->set_primitive_type(pt);
+		device->set_vertex_buffer(0, 3, buffers, s_strides, s_offsets);
+		device->set_ps_texture2d_resource(0, 1, &texture);
+	}
 
 	offset = size;
 	size += count;
@@ -101,7 +106,9 @@ void ss_draw_batch::flush(){
 		// Why not lock instead? Prepare for DX and cross-thread render.
 		buf_position->copy(0, ptr_position, sizeof(float2)*size);
 		buf_diffuse->copy(0, ptr_diffuse, sizeof(color)*size);
-		buf_texcoord->copy(0, ptr_texcoord, sizeof(float2)*size);
+		if (il == il_texture){
+			buf_texcoord->copy(0, ptr_texcoord, sizeof(float2)*size);
+		}
 
 		// Do draw
 		for (size_t i = 0; i < tech->pass_count(); i++){
@@ -122,11 +129,11 @@ void ss_draw_batch::flush(){
 }
 
 
-SS_CORE_API void ss_db_flush(ss_core_context* C){
+void ss_db_flush(ss_core_context* C){
 	C->draw_batch->flush();
 }
 
-SS_CORE_API void ss_db_draw_line(ss_core_context* C, float x0, float y0, float x1, float y1){
+void ss_db_draw_line(ss_core_context* C, float x0, float y0, float x1, float y1){
 	ss_draw_batch* v = C->draw_batch;
 	v->prepare(SS_PT_LINELIST, 2);
 	v->pos(0) = float2(x0, y0);
@@ -134,3 +141,33 @@ SS_CORE_API void ss_db_draw_line(ss_core_context* C, float x0, float y0, float x
 	v->diffuse(0) = v->diffuse(1) = color(1, 1, 1);
 }
 
+void ss_db_draw_image_rect(
+	ss_core_context* C,
+	ss_texture2d*	 texture,
+	float l, float t, float w, float h,
+	float tl, float tt, float tw, float th
+	){
+	float r = l + w;
+	float b = t + h;
+	float tr = tl + tw;
+	float tb = tt + th;
+
+	ss_draw_batch* v = C->draw_batch;
+	v->prepare(texture, SS_PT_TRIANGLELIST, 6);
+
+	v->diffuse(0) = v->diffuse(1) =
+		v->diffuse(2) = v->diffuse(3) =
+		v->diffuse(4) = v->diffuse(5) = color(1, 1, 1);
+
+	v->pos(0) = float2(l, t);
+	v->texcoord(0) = float2(tl, tt);
+
+	v->pos(4) = v->pos(1) = float2(r, t);
+	v->texcoord(4) = v->texcoord(1) = float2(tr, tt);
+
+	v->pos(3) = v->pos(2) = float2(l, b);
+	v->texcoord(3) = v->texcoord(2) = float2(tl, tb);
+
+	v->pos(5) = float2(r, b);
+	v->texcoord(5) = float2(tr, tb);
+}
