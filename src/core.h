@@ -38,6 +38,9 @@ struct ss_core_context{
 	std::map<std::string, ss_macro> map_macros;
 	std::map<std::string, ss_uri_schema_handler*> uri_schemas;
 	lua_State*		L;
+	ss_render_device* renderer;
+	ss_core_context();
+	~ss_core_context();
 };
 
 void _ss_uri_init_schemas(ss_core_context* C);
