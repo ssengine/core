@@ -1,5 +1,5 @@
 #include "core.h"
-
+#include "render/draw_batch.h"
 
 //define DllMain for windows
 #ifdef WIN32
@@ -47,7 +47,7 @@ void ss_destroy_context(ss_core_context* C){
 }
 
 ss_core_context::ss_core_context()
-	: L(NULL), renderer(0)
+	: L(nullptr), renderer(0), draw_batch(nullptr)
 {
 	_ss_uri_init_schemas(this);
 	_ss_init_script_context(this);
@@ -65,6 +65,13 @@ SS_CORE_API ss_render_device*  ss_get_render_device(ss_core_context* C){
 }
 
 SS_CORE_API void ss_set_render_device(ss_core_context* C, ss_render_device* device){
+	//TODO: use null device if there's no device.
+	if (C->draw_batch){
+		delete C->draw_batch;
+	}
 	C->renderer = device;
+	if (device){
+		C->draw_batch = new ss_draw_batch(device);
+	}
 }
 

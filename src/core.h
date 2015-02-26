@@ -34,11 +34,15 @@ struct ss_macro{
 
 struct ss_uri_schema_handler;
 
+struct ss_draw_batch;
+
 struct ss_core_context{
 	std::map<std::string, ss_macro> map_macros;
 	std::map<std::string, ss_uri_schema_handler*> uri_schemas;
 	lua_State*		L;
 	ss_render_device* renderer;
+
+	ss_draw_batch*	draw_batch;
 	ss_core_context();
 	~ss_core_context();
 };
