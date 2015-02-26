@@ -30,6 +30,12 @@ static luaL_Reg log_funcs[] = {
 };
 
 int ss_module_log(lua_State* L){
+#if LUA_VERSION_NUM >= 502
+    luaL_newlib(L, log_funcs);
+    lua_pushvalue(L, -1); /* make "log" global */
+    lua_setglobal(L, "log");
+#else
 	luaL_register(L, "log", log_funcs);
+#endif
 	return 1;
 }
