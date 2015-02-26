@@ -26,8 +26,12 @@ int luaL_loadurix(lua_State* L, const char* uri, const char* mode){
 	}
 	chunkname = lua_pushfstring(L, "@%s", uri);
 	
-	status = lua_loadx(L, reader_uri, &ctx, chunkname, mode);
-	
+#if LUA_VERSION_NUM >= 502
+	status = lua_load(L, reader_uri, &ctx, chunkname, mode);
+#else
+    status = lua_loadx(L, reader_uri, &ctx, chunkname, mode);
+#endif
+
 	lua_remove(L, -2);
 	delete ctx.fp;
 
@@ -56,9 +60,9 @@ static void loaderror(lua_State *L, const char *uri)
 static const char *pushnexttemplate(lua_State *L, const char *path)
 {
 	const char *l;
-	while (*path == *LUA_PATHSEP) path++;  /* skip separators */
+    while (*path == ';') path++;  /* skip separators */
 	if (*path == '\0') return NULL;  /* no more templates */
-	l = strchr(path, *LUA_PATHSEP);  /* find next separator */
+    l = strchr(path, ';');  /* find next separator */
 	if (l == NULL) l = path + strlen(path);
 	lua_pushlstring(L, path, (size_t)(l - path));  /* template */
 	return l;
@@ -76,7 +80,7 @@ static const char *searchpath(lua_State *L, const char *name,
 		name = luaL_gsub(L, name, sep, dirsep);  /* replace it by 'dirsep' */
 	while ((path = pushnexttemplate(L, path)) != NULL) {
 		const char *filename = luaL_gsub(L, lua_tostring(L, -1),
-			LUA_PATH_MARK, name);
+			"?", name);
 		lua_remove(L, -2);  /* remove path template */
 		if (readable(C, filename))  /* does file exist and is readable? */
 			return filename;  /* return that file name */
@@ -163,7 +167,7 @@ static void findloader(lua_State *L, const char *name) {
     luaL_buffinit(L, &msg);
 
     lua_getglobal(L, "package");
-#if LUA_VERSION_NUM > 502
+#if LUA_VERSION_NUM >= 502
     lua_getfield(L, -1, "searchers");
 #else
     lua_getfield(L, -1, "loaders");
@@ -213,7 +217,7 @@ static int domodule(lua_State *L) {
 
 extern "C" int ss_module_uri_loader(lua_State *L){
 	lua_getglobal(L, "package");
-#if LUA_VERSION_NUM > 502
+#if LUA_VERSION_NUM >= 502
 	lua_getfield(L, -1, "searchers");
 #else
 	lua_getfield(L, -1, "loaders");
