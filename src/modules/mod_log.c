@@ -1,7 +1,6 @@
 #include "../modules.h"
 #include <ssengine/log.h>
 
-#include <lua.h>
 #include <lauxlib.h>
 
 static int dolog(int level, lua_State* L){
