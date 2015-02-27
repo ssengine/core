@@ -1,5 +1,6 @@
 #include "core.h"
 #include "render/draw_batch.h"
+#include <ssengine/resource.h>
 
 //define DllMain for windows
 #ifdef WIN32
@@ -53,9 +54,15 @@ ss_core_context::ss_core_context()
 	_ss_init_script_context(this);
 
 	//TODO: define core macros
+
+	ss_open_device(this, SS_DT_SOFTWARE);
 }
 
 ss_core_context::~ss_core_context(){
+	while (resource_with_device_type.size() > 0){
+		ss_close_device(this, resource_with_device_type.begin()->first);
+	}
+
 	_ss_destroy_script_context(this);
 	_ss_release_schemas(this);
 }

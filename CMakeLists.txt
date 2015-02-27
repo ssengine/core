@@ -24,6 +24,10 @@ SET(LOCAL_SOURCES_FILES
 	
 	src/render/draw_batch.h
 	src/render/draw_batch.cpp
+	src/render/render_resources.cpp
+
+	src/resource/resource_load.cpp
+	src/resource/resource_manager.cpp
 	)
 
 LINK_LIBRARIES(${SS_LUA_LIBNAME})
