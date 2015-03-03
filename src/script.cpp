@@ -58,38 +58,37 @@ ss_core_context* ss_lua_get_core_context(lua_State* L){
 
 void ss_run_script_from_macro(ss_core_context* C, const char* name, int nargs, int nrets){
 	lua_State* L = C->L;
-	//check if target chunk exist in cache.
-	lua_getglobal(L, "package");
-	lua_getfield(L, -1, "preload");
-	lua_getfield(L, -1, name);
-	if (lua_isfunction(L, -1)) {
-		//target chunk already exists, just call it.
-		for (int i = 0; i < 2; i++)
-			lua_remove(L, -2);
-		ss_lua_safe_call(L, nargs, nrets);
-	}
-	else {
-		//now we need load the chunk first.
+
+	ss_macro_eval(C, name);
+	if (luaL_loadstring(L, ss_macro_get_content(C, name).c_str()) != 0){
+		// with Error
+		SS_LOGE("%s", lua_tostring(L, -1));
 		lua_pop(L, 1);
-		ss_macro_eval(C, name);
-		if (luaL_loadstring(L, ss_macro_get_content(C, name).c_str()) != 0){
-			// with Error
+		return;
+	}
+	if (nargs){
+		lua_insert(L, -nargs - 1);
+	}
+	ss_lua_safe_call(L, nargs, nrets);
+}
+
+void ss_cache_script_from_macro(lua_State *L, const char* macro, void* tagPointer) {
+	lua_pushlightuserdata(L, tagPointer);
+	lua_rawget(L, LUA_REGISTRYINDEX);
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, 1);
+		ss_core_context* C = ss_lua_get_core_context(L);
+		lua_pop(L, 1);
+		ss_macro_eval(C, macro);
+		if (luaL_loadstring(L, ss_macro_get_content(C, macro).c_str()) != 0){
+			//with error
 			SS_LOGE("%s", lua_tostring(L, -1));
 			lua_pop(L, 1);
 			return;
 		}
-		//do cache.
-		lua_pushvalue(L, -1);
-		lua_pushstring(L, name);
-		lua_insert(L, -2);
-		lua_rawset(L, -4);
-		for (int i = 0; i < 2; i++)
-			lua_remove(L, -2);
-
-		if (nargs){
-			lua_insert(L, -nargs - 1);
-		}
-		ss_lua_safe_call(L, nargs, nrets);
+		lua_pushlightuserdata(L, tagPointer);
+		lua_pushvalue(L, -2);
+		lua_rawset(L, LUA_REGISTRYINDEX);
 	}
 }
 
