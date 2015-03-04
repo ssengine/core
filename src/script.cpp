@@ -72,19 +72,22 @@ void ss_run_script_from_macro(ss_core_context* C, const char* name, int nargs, i
 	ss_lua_safe_call(L, nargs, nrets);
 }
 
+static int lua_nop(lua_State *){
+	return 0;
+}
+
 void ss_cache_script_from_macro(lua_State *L, const char* macro, void* tagPointer) {
 	lua_pushlightuserdata(L, tagPointer);
 	lua_rawget(L, LUA_REGISTRYINDEX);
 	if (!lua_isfunction(L, -1)) {
 		lua_pop(L, 1);
 		ss_core_context* C = ss_lua_get_core_context(L);
-		lua_pop(L, 1);
 		ss_macro_eval(C, macro);
 		if (luaL_loadstring(L, ss_macro_get_content(C, macro).c_str()) != 0){
 			//with error
 			SS_LOGE("%s", lua_tostring(L, -1));
 			lua_pop(L, 1);
-			return;
+			lua_pushcfunction(L, lua_nop);
 		}
 		lua_pushlightuserdata(L, tagPointer);
 		lua_pushvalue(L, -2);
