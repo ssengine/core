@@ -58,7 +58,7 @@ ss_core_context* ss_lua_get_core_context(lua_State* L){
 
 void ss_run_script_from_macro(ss_core_context* C, const char* name, int nargs, int nrets){
 	lua_State* L = C->L;
-	
+
 	ss_macro_eval(C, name);
 	if (luaL_loadstring(L, ss_macro_get_content(C, name).c_str()) != 0){
 		// with Error
@@ -70,6 +70,26 @@ void ss_run_script_from_macro(ss_core_context* C, const char* name, int nargs, i
 		lua_insert(L, -nargs - 1);
 	}
 	ss_lua_safe_call(L, nargs, nrets);
+}
+
+void ss_cache_script_from_macro(lua_State *L, const char* macro, void* tagPointer) {
+	lua_pushlightuserdata(L, tagPointer);
+	lua_rawget(L, LUA_REGISTRYINDEX);
+	if (!lua_isfunction(L, -1)) {
+		lua_pop(L, 1);
+		ss_core_context* C = ss_lua_get_core_context(L);
+		lua_pop(L, 1);
+		ss_macro_eval(C, macro);
+		if (luaL_loadstring(L, ss_macro_get_content(C, macro).c_str()) != 0){
+			//with error
+			SS_LOGE("%s", lua_tostring(L, -1));
+			lua_pop(L, 1);
+			return;
+		}
+		lua_pushlightuserdata(L, tagPointer);
+		lua_pushvalue(L, -2);
+		lua_rawset(L, LUA_REGISTRYINDEX);
+	}
 }
 
 static int tag_error_handler = 0;
