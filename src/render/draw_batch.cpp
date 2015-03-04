@@ -153,7 +153,7 @@ void ss_db_draw_image_rect(
 	float tl, float tt, float tw, float th
 	){
 	float r = l + w;
-	float b = t + h;
+	float b = t - h;
 	float tr = tl + tw;
 	float tb = tt + th;
 
