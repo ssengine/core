@@ -62,8 +62,8 @@ void ss_draw_batch::prepare(ss_texture2d* texture, ss_primitive_type pt, size_t 
 	prepare(device->get_predefined_technique(SS_PDT_STANDARD), texture, pt, count);
 }
 
-size_t s_strides[3] = { sizeof(float)* 2, sizeof(float)* 4, sizeof(float)* 2 };
-size_t s_offsets[3] = { 0, 0, 0 };
+unsigned int s_strides[3] = { sizeof(float)* 2, sizeof(float)* 4, sizeof(float)* 2 };
+unsigned int s_offsets[3] = { 0, 0, 0 };
 
 void ss_draw_batch::prepare(ss_render_technique* _tech, ss_primitive_type _pt, size_t count)
 {
