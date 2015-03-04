@@ -21,6 +21,7 @@ extern "C" int ss_module_uri_loader(lua_State *L);
 static void ss_init_lua_libs(lua_State *L){
 	luaL_openlibs(L);
 	ss_lua_preload_module(L, "log", ss_module_log);
+	ss_lua_preload_module(L, "render2d", ss_module_render2d);
 	
 	lua_pushcfunction(L, ss_module_uri_loader);
 	lua_call(L, 0, 0);

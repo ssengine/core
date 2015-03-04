@@ -21,6 +21,7 @@ SET(LOCAL_SOURCES_FILES
 	
 	src/modules/mod_log.c
 	src/modules/mod_uri_loader.cpp
+	src/modules/mod_render2d.cpp
 	
 	src/render/draw_batch.h
 	src/render/draw_batch.cpp
@@ -28,6 +29,11 @@ SET(LOCAL_SOURCES_FILES
 
 	src/resource/resource_load.cpp
 	src/resource/resource_manager.cpp
+	
+	src/decoders/decoder.h
+	src/decoders/decoder_win32.cpp
+	src/decoders/decoder_android.cpp
+	src/decoders/decoder_ios.cpp
 	)
 
 LINK_LIBRARIES(${SS_LUA_LIBNAME})
