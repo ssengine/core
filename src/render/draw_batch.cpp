@@ -46,6 +46,10 @@ ss_draw_batch::~ss_draw_batch()
 
 	delete il_texture;
 	delete il_notexture;
+
+	delete buf_position;
+	delete buf_diffuse;
+	delete buf_texcoord;
 }
 
 void ss_draw_batch::prepare(ss_primitive_type pt, size_t count)
