@@ -17,9 +17,11 @@ struct ss_image_data {
 	~ss_image_data() {
 		if (data != nullptr) {
 			delete[] data;
+			data = nullptr;
 		}
 		if (texture != nullptr) {
 			delete texture;
+			texture = nullptr;
 		}
 	}
 
