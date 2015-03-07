@@ -55,7 +55,7 @@ static unsigned int _get_image_stride(unsigned int width, unsigned int bpp) {
 }
 
 //TODO : need a relative path !
-int ss_decode_image(const char *path, ss_image_data *data) {
+int ss_decode_image(const char *path, ss_userdata_image *data) {
 	if (s_decoder == nullptr) {
 		SS_WLOGE(L"you must call ss_init_decoder() method first!");
 		return -1;
@@ -113,14 +113,14 @@ int ss_decode_image(const char *path, ss_image_data *data) {
 
 	//copy pixels.
 	unsigned int size = stride * data->height;
-	if (data->data != nullptr)
-		delete[] data->data;
-	data->data = new unsigned char[size];
+	if (data->pixels != nullptr)
+		delete[] data->pixels;
+	data->pixels = new unsigned char[size];
 	hr = s_decoder->frame->CopyPixels(
 			nullptr,
 			stride,
 			size,
-			data->data
+			data->pixels
 		);
 	if (hr != S_OK) {
 		SS_WLOGE(L"WIC copyPixels error! the filename is:[%s]", wpath);
