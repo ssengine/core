@@ -66,7 +66,7 @@ struct ss_resource_ref_impl{
 		int							 _dt,
 		std::string					 _uri
 		) :prototype(_pt), device_type(_dt), uri(_uri),
-		ptr(nullptr), ref_count(0),
+		ptr(nullptr), ref_count(1),
 		error_code(0)
 	{
 
