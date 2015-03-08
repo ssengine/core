@@ -55,7 +55,7 @@ static unsigned int _get_image_stride(unsigned int width, unsigned int bpp) {
 }
 
 //TODO : need a relative path !
-int ss_decode_image(const char *path, ss_userdata_image *data) {
+int ss_decode_image(const char *path, ss_image_data *data) {
 	if (s_decoder == nullptr) {
 		SS_WLOGE(L"you must call ss_init_decoder() method first!");
 		return -1;
