@@ -8,7 +8,9 @@ ss_resource_ref* ss_resource_from_uri(ss_core_context* C, const char* uri)
 {
 	auto itor = C->resource_from_uris.find(uri);
 	if (itor != C->resource_from_uris.end()){
-		return itor->second->ref();
+		ss_resource_ref *ref = itor->second->ref();
+		ss_resource_addref(C, ref);
+		return ref;
 	}
 	return NULL;
 }

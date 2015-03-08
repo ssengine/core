@@ -54,6 +54,7 @@ struct ss_resource_ref_impl{
 	const ss_resource_prototype* const	prototype;
 	const int							device_type;
 	void*								ptr;
+	void*								extra_info_ptr;
 
 	int									ref_count;
 	std::string							uri;
@@ -66,7 +67,7 @@ struct ss_resource_ref_impl{
 		int							 _dt,
 		std::string					 _uri
 		) :prototype(_pt), device_type(_dt), uri(_uri),
-		ptr(nullptr), ref_count(0),
+		ptr(nullptr), extra_info_ptr(nullptr), ref_count(1),
 		error_code(0)
 	{
 
