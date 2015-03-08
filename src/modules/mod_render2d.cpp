@@ -42,6 +42,13 @@ static int ll_draw_image(lua_State *L) {
 	return 0;
 }
 
+static int ll_on_image_gc_called(lua_State *L) {
+	ss_userdata_resource *ures = get_res(L, 1);
+	ss_core_context *C = ss_lua_get_core_context(L);
+	ss_resource_release(C, ures->res);
+	return 0;
+}
+
 static int ll_create_image(lua_State *L) {
 	const char *uri = luaL_checkstring(L, 1);
 	ss_core_context *C = ss_lua_get_core_context(L);
@@ -66,6 +73,10 @@ static int ll_create_image(lua_State *L) {
 
 	lua_pushstring(L, "draw");
 	lua_pushcfunction(L, ll_draw_image);
+	lua_rawset(L, -3);
+
+	lua_pushstring(L, "__gc");
+	lua_pushcfunction(L, ll_on_image_gc_called);
 	lua_rawset(L, -3);
 
 	lua_setmetatable(L, -2);
