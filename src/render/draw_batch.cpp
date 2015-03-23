@@ -73,6 +73,7 @@ void ss_draw_batch::prepare(ss_render_technique* _tech, ss_primitive_type _pt, s
 		// Do not bind texcoord
 		il = il_notexture;
 		tech = _tech;
+        texture = NULL;
 		pt = _pt;
 
 		device->set_input_layout(il);
