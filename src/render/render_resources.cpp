@@ -3,56 +3,48 @@
 #include <ssengine/render/resources.h>
 #include <ssengine/render/device.h>
 
-#include "../core.h"
 #include "../decoders/decoder.h"
 
-static ss_resource_type texture_resource_type_tag;
+#include "../core.h"
 
-#ifdef WIN32
-int load_image(ss_core_context *C, ss_resource_ref *ref) {
-	ss_resource_ref_impl *ref_impl = wrap(ref);
-	const char *uri = ref_impl->uri.c_str();
-	ss_image_data *img_data = reinterpret_cast<ss_image_data*>(ref->extra_info_ptr);
+static ss_resource_type texture2d_resource_type_tag;
 
-	ss_init_decoder();
+static int (texture2d_sync_load)(ss_core_context* C, ss_resource_ref* ref){
+    ss_render_device* device = ss_get_render_device(C);
 
-	return ss_decode_image(uri, img_data);
-}
-#elif ANDROID
-int load_image(ss_core_context *C, ss_resource_ref *ref) {
-	//TODO
-}
-#elif IOS
-int load_image(ss_core_context *C, ss_resource_ref *ref) {
-	//TODO
-}
-#endif
+    ss_resource_ref_impl* ref_impl = wrap(ref);
+    ss_image_data data;
+    int ret = load_image(C, ref_impl->uri.c_str(), &data);
+    if (ret != 0){
+        return ret;
+    }
 
-static int (texture_sync_load)(ss_core_context* C, ss_resource_ref* ref){
-	return load_image(C, ref);
+    ref->ptr = device->create_texture2d(data.width, data.height, data.format, data.pixels);
+
+    return 0;
 }
 
-static void (texture_unload)(ss_core_context* C, ss_resource_ref* ref){
+static void (texture2d_unload)(ss_core_context* C, ss_resource_ref* ref){
 	if (ref->ptr){
-		delete reinterpret_cast<ss_texture*>(ref->ptr);
+		delete reinterpret_cast<ss_texture2d*>(ref->ptr);
 		ref->ptr = NULL;
 	}
 }
 
-static ss_resource_prototype  texture_prototype = {
-	&texture_resource_type_tag,
-	texture_sync_load,
+static ss_resource_prototype  texture2d_prototype = {
+	&texture2d_resource_type_tag,
+    texture2d_sync_load,
 	NULL,
-	texture_unload
+	texture2d_unload
 };
 
 
-ss_texture_resource_ref* ss_texture_resource(ss_core_context* C, const char* uri){
+ss_texture2d_resource_ref* ss_texture2d_resource(ss_core_context* C, const char* uri){
 	ss_resource_ref* ret;
 	ret = ss_resource_from_uri(C, uri);
 	if (ret){
-		return ss_texture_resource_ref::wrap(ret);
+        return ss_texture2d_resource_ref::wrap(ret);
 	}
-	ret = ss_resource_create(C, &texture_prototype, uri, SS_DT_RENDER);
-	return ss_texture_resource_ref::wrap(ret);
+    ret = ss_resource_create(C, &texture2d_prototype, uri, SS_DT_RENDER);
+    return ss_texture2d_resource_ref::wrap(ret);
 }

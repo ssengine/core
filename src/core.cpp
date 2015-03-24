@@ -48,10 +48,12 @@ void ss_destroy_context(ss_core_context* C){
 }
 
 ss_core_context::ss_core_context()
-	: L(nullptr), renderer(0), draw_batch(nullptr)
+    : L(nullptr), renderer(0), draw_batch(nullptr), image_decoder(nullptr)
 {
 	_ss_uri_init_schemas(this);
 	_ss_init_script_context(this);
+
+    _ss_init_image_decoder(this);
 
 	//TODO: define core macros
 
@@ -65,6 +67,8 @@ ss_core_context::~ss_core_context(){
 
 	_ss_destroy_script_context(this);
 	_ss_release_schemas(this);
+
+    _ss_dispose_image_decoder(this);
 }
 
 SS_CORE_API ss_render_device*  ss_get_render_device(ss_core_context* C){

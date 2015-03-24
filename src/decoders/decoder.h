@@ -39,7 +39,7 @@ typedef struct ss_image_data {
 
 SS_CORE_API void ss_init_decoder();
 SS_CORE_API void ss_dispose_decoder();
-SS_CORE_API int ss_decode_image(const char *path, ss_userdata_image *data);
+SS_CORE_API int load_image(ss_core_context *C, const char *path, ss_userdata_image *data);
 
 #ifdef __cplusplus
 }

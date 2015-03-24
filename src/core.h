@@ -54,7 +54,6 @@ struct ss_resource_ref_impl{
 	const ss_resource_prototype* const	prototype;
 	const int							device_type;
 	void*								ptr;
-	void*								extra_info_ptr;
 
 	int									ref_count;
 	std::string							uri;
@@ -67,8 +66,8 @@ struct ss_resource_ref_impl{
 		int							 _dt,
 		std::string					 _uri
 		) :prototype(_pt), device_type(_dt), uri(_uri),
-		ptr(nullptr), extra_info_ptr(nullptr), ref_count(1),
-		error_code(0)
+		ptr(nullptr), ref_count(1),
+        error_code(0), status(0)
 	{
 
 	}
@@ -82,6 +81,8 @@ inline ss_resource_ref_impl* wrap(ss_resource_ref* p){
 	return reinterpret_cast<ss_resource_ref_impl*>(p);
 }
 
+struct ss_image_decoder;
+
 struct ss_core_context{
 	std::map<std::string, ss_macro> map_macros;
 	std::map<std::string, ss_uri_schema_handler*>	uri_schemas;
@@ -92,6 +93,8 @@ struct ss_core_context{
 
 	std::map<std::string, int>	user_defined_device_type;
 
+    ss_image_decoder* image_decoder;
+
 	lua_State*		L;
 	ss_render_device* renderer;
 
@@ -101,6 +104,10 @@ struct ss_core_context{
 };
 
 void _ss_uri_init_schemas(ss_core_context* C);
-void _ss_init_script_context(ss_core_context* C);
 void _ss_release_schemas(ss_core_context* C);
+
+void _ss_init_script_context(ss_core_context* C);
 void _ss_destroy_script_context(ss_core_context* C);
+
+void _ss_init_image_decoder(ss_core_context* C);
+void _ss_dispose_image_decoder(ss_core_context* C);

@@ -1,28 +1,31 @@
-#include "decoder.h"
-
 #include <windows.h>
 #include <wincodec.h>
 #include <assert.h>
 
-#include "ssengine/log.h"
+#include <ssengine/log.h>
+#include <ssengine/uri.h>
+#include <ssengine/render/device.h>
+#include <atlcomcli.h>
+
+#include <ssengine/details/win32/CStreamWrapper.h>
+
+#include "decoder.h"
+
+#include "../core.h"
 
 struct ss_image_decoder {
-	IWICImagingFactory *factory;
-	IWICBitmapDecoder *decoder;
-	IWICBitmapFrameDecode *frame;
+	CComPtr<IWICImagingFactory> factory;
 };
 
-static ss_image_decoder *s_decoder = nullptr;
-
-void ss_init_decoder() {
-	if (s_decoder == nullptr) {
-		s_decoder = new ss_image_decoder();
+void _ss_init_image_decoder(ss_core_context* C) {
+    if (C->image_decoder == nullptr) {
+        C->image_decoder = new ss_image_decoder();
 		
 		HRESULT hr = CoCreateInstance(
 			CLSID_WICImagingFactory,
 			nullptr,
 			CLSCTX_INPROC_SERVER,
-			IID_PPV_ARGS(&s_decoder->factory)
+            IID_PPV_ARGS(&C->image_decoder->factory)
 			);
 		if (hr != S_OK) {
 			SS_WLOGE(L"Failed to load WIC");
@@ -31,101 +34,84 @@ void ss_init_decoder() {
 	}
 }
 
-void ss_dispose_decoder() {
-	if (s_decoder != nullptr) {
-		if (s_decoder->factory != nullptr)
-			s_decoder->factory->Release();
-		if (s_decoder->decoder != nullptr)
-			s_decoder->decoder->Release();
-		if (s_decoder->frame != nullptr)
-			s_decoder->frame->Release();
-		delete s_decoder;
-		s_decoder = nullptr;
+void _ss_dispose_image_decoder(ss_core_context* C) {
+    if (C->image_decoder != nullptr) {
+        delete C->image_decoder;
+        C->image_decoder = nullptr;
 	}
 }
 
-static unsigned int _get_image_stride(unsigned int width, unsigned int bpp) {
-	assert(bpp % 8 == 0);
-
-	unsigned int byteCount = bpp / 8;
+static unsigned int _get_image_stride(unsigned int width, unsigned int byteCount) {
 	unsigned int stride = (width * byteCount + 3) & ~3;
 
 	assert(stride % sizeof(DWORD) == 0);
 	return stride;
 }
 
-//TODO : need a relative path !
-int ss_decode_image(const char *path, ss_image_data *data) {
-	if (s_decoder == nullptr) {
-		SS_WLOGE(L"you must call ss_init_decoder() method first!");
+int load_image(ss_core_context *C, const char *uri, ss_userdata_image *data) {
+    CStreamWrapper wrapper(ss_uri_open_for_read(C, uri));
+
+    CComPtr<IWICBitmapDecoder> decoder;
+
+    HRESULT hr = C->image_decoder->factory->CreateDecoderFromStream(
+            &wrapper,
+            nullptr,
+            WICDecodeMetadataCacheOnDemand,
+            &decoder
+            );
+
+    if (hr != S_OK) {
+        SS_LOGE("WIC create decoder failed from uri: [%s]", uri);
 		return -1;
 	}
 
-	wchar_t *wpath = char2wchar_t(path);
-	HRESULT hr = s_decoder->factory->CreateDecoderFromFilename(
-			wpath,
-			nullptr,
-			GENERIC_READ,
-			WICDecodeMetadataCacheOnDemand,
-			&s_decoder->decoder
-		);
-	if (hr != S_OK) {
-		SS_WLOGE(L"WIC create decoder failed from the file:[%s]", wpath);
-		return -1;
-	}
+    CComPtr<IWICBitmapFrameDecode> frame;
+    hr = decoder->GetFrame(0, &frame);
 
-	if (s_decoder->frame != nullptr)
-		s_decoder->frame->Release();
+    if (hr != S_OK) {
+        SS_LOGE("WIC decode image failed! uri: [%s]", uri);
+        return -1;
+    }
+    UINT width, height;
+    frame->GetSize(&width, &height);
 
-	hr = s_decoder->decoder->GetFrame(0, &s_decoder->frame);
-	if (hr != S_OK) {
-		SS_WLOGE(L"WIC decode image failed! the filename is:[%s]", wpath);
-		return -1;
-	}
+    GUID pixel_format = { 0 };
+    frame->GetPixelFormat(&pixel_format);
 
-	s_decoder->frame->GetSize(&data->width, &data->height);
-	GUID pixel_format = { 0 };
-	s_decoder->frame->GetPixelFormat(&pixel_format);
+    unsigned int stride = 0;
+    ss_render_format format;
 
-	//TODO ss_render_format is not enough !!
-	unsigned int stride = 0;
-	if (IsEqualGUID(pixel_format, GUID_WICPixelFormat32bppRGBA)) {
-		data->format = SS_FORMAT_BYTE_RGBA;
-		stride = _get_image_stride(data->width, 32);
-	}
-	else if (IsEqualGUID(pixel_format, GUID_WICPixelFormat32bppBGRA)) {
-		data->format = SS_FORMAT_BYTE_BGRA;
-		stride = _get_image_stride(data->width, 32);
-	}
-	else if (IsEqualGUID(pixel_format, GUID_WICPixelFormat32bppBGR)) {
-		data->format = SS_FORMAT_BYTE_RGBA;
-		stride = _get_image_stride(data->width, 32);
-	}
-	else if (IsEqualGUID(pixel_format, GUID_WICPixelFormat24bppRGB)) {
-		//TODO ss_render_format should support RGB.
-		stride = _get_image_stride(data->width, 24);
-	}
-	else {
-		data->format = SS_FORMAT_NULL;
-		SS_WLOGE(L"WIC Unsupport image format! the filename is:[%s]", wpath);
-		return -1;
-	}
+    if (IsEqualGUID(pixel_format, GUID_WICPixelFormat32bppRGBA)) {
+        format = SS_FORMAT_BYTE_RGBA;
+    }
+    else if (IsEqualGUID(pixel_format, GUID_WICPixelFormat32bppBGRA)) {
+        format = SS_FORMAT_BYTE_BGRA;
+    }
+    else {
+        //TODO: tranlate format into known format.
+        SS_LOGE("WIC Unsupport image format! uri: [%s]", uri);
+        return -1;
+    }
+    stride = _get_image_stride(width, ss_render_format_sizeof(format));
 
-	//copy pixels.
-	unsigned int size = stride * data->height;
-	if (data->pixels != nullptr)
-		delete[] data->pixels;
-	data->pixels = new unsigned char[size];
-	hr = s_decoder->frame->CopyPixels(
-			nullptr,
-			stride,
-			size,
-			data->pixels
-		);
-	if (hr != S_OK) {
-		SS_WLOGE(L"WIC copyPixels error! the filename is:[%s]", wpath);
-		return -1;
-	}
+    unsigned int size = stride * height;
+    BYTE* buffer = new BYTE[size];
+    hr = frame->CopyPixels(
+        nullptr,
+        stride,
+        size,
+        buffer
+        );
+    if (hr != S_OK) {
+        delete[] buffer;
+        SS_LOGE("WIC copyPixels error! uri: [%s]", uri);
+        return -1;
+    }
 
-	return 0;
+    data->width = width;
+    data->height = height;
+    data->format = format;
+    data->pixels = buffer;
+
+    return 0;
 }
