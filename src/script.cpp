@@ -16,16 +16,22 @@ void ss_lua_preload_module(lua_State *L, const char* name, lua_CFunction func){
 	lua_pop(L, 2);
 }
 
-extern "C" int ss_module_uri_loader(lua_State *L);
+static void ss_lua_require_module(lua_State *L, const char* name){
+    lua_getglobal(L, "require");
+    lua_pushstring(L, name);
+    ss_lua_safe_call(L, 0, 0);
+}
 
 static void ss_init_lua_libs(lua_State *L){
 	luaL_openlibs(L);
 	ss_lua_preload_module(L, "log", ss_module_log);
 	ss_lua_preload_module(L, "render2d", ss_module_render2d);
+    ss_lua_preload_module(L, "resource", ss_module_resource);
 	
 	lua_pushcfunction(L, ss_module_uri_loader);
 	lua_call(L, 0, 0);
 
+    ss_lua_require_module(L, "resource");
 }
 
 static int s_tag_core_context = 0;

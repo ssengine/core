@@ -25,10 +25,10 @@ static int ll_flush(lua_State *L) {
 }
 
 int ss_module_render2d(lua_State *L) {
-	luaL_reg render2d_funcs[] = {
-		"drawLine", ll_draw_line,
-		"flush", ll_flush,
-		NULL, NULL
+    luaL_reg render2d_funcs[] = {
+        { "drawLine", ll_draw_line },
+        { "flush", ll_flush },
+        { NULL, NULL }
 	};
 
 #if LUA_VERSION_NUM >= 502

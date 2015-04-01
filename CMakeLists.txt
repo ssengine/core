@@ -22,6 +22,7 @@ SET(LOCAL_SOURCES_FILES
 	src/modules/mod_log.c
 	src/modules/mod_uri_loader.cpp
 	src/modules/mod_render2d.cpp
+	src/modules/mod_resource.cpp
 	
 	src/render/draw_batch.h
 	src/render/draw_batch.cpp
