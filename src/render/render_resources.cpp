@@ -39,12 +39,12 @@ static ss_resource_prototype  texture2d_prototype = {
 };
 
 
-ss_texture2d_resource_ref* ss_texture2d_resource(ss_core_context* C, const char* uri){
+ss_resource_ref* ss_texture2d_resource(ss_core_context* C, const char* uri){
 	ss_resource_ref* ret;
 	ret = ss_resource_from_uri(C, uri);
 	if (ret){
-        return ss_texture2d_resource_ref::wrap(ret);
+        return ret;
 	}
     ret = ss_resource_create(C, &texture2d_prototype, uri, SS_DT_RENDER);
-    return ss_texture2d_resource_ref::wrap(ret);
+    return ret;
 }
