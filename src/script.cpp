@@ -30,8 +30,6 @@ static void ss_init_lua_libs(lua_State *L){
 	
 	lua_pushcfunction(L, ss_module_uri_loader);
 	lua_call(L, 0, 0);
-
-    ss_lua_require_module(L, "resource");
 }
 
 static int s_tag_core_context = 0;

@@ -49,12 +49,12 @@ bool ss_file_schema_handler::is_local(){
 
 bool ss_file_schema_handler::exists(const ss_uri& uri){
     struct _stat st;
-    return _wstat(ss_file_uri_to_path(uri).c_str() + 1, &st) == 0;
+    return _wstat(ss_file_uri_to_path(uri).c_str(), &st) == 0;
 }
 
 bool ss_file_schema_handler::is_file(const ss_uri& uri){
     struct _stat st;
-    if (_wstat(ss_file_uri_to_path(uri).c_str() + 1, &st) != 0)
+    if (_wstat(ss_file_uri_to_path(uri).c_str(), &st) != 0)
     {
 		return false;
 	}
@@ -64,7 +64,7 @@ bool ss_file_schema_handler::is_file(const ss_uri& uri){
 bool ss_file_schema_handler::is_directory(const ss_uri& uri)
 {
     struct _stat st;
-    if (_wstat(ss_file_uri_to_path(uri).c_str() + 1, &st) != 0)
+    if (_wstat(ss_file_uri_to_path(uri).c_str(), &st) != 0)
 	{
 		return false;
 	}
@@ -73,7 +73,7 @@ bool ss_file_schema_handler::is_directory(const ss_uri& uri)
 
 bool ss_file_schema_handler::mkdir(const ss_uri& uri)
 {
-    return _wmkdir(ss_file_uri_to_path(uri).c_str() + 1) == 0;
+    return _wmkdir(ss_file_uri_to_path(uri).c_str()) == 0;
 }
 
 struct file_input_stream : input_stream
