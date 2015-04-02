@@ -9,6 +9,10 @@
 
 static ss_resource_type texture2d_resource_type_tag;
 
+const ss_resource_type*  ss_texture2d_resource_typetag(){
+    return &texture2d_resource_type_tag;
+}
+
 static int (texture2d_sync_load)(ss_core_context* C, ss_resource_ref* ref){
     ss_render_device* device = ss_get_render_device(C);
 

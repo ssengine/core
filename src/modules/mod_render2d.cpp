@@ -18,14 +18,37 @@ static int ll_draw_line(lua_State *L) {
 	return 0;
 }
 
+static int ll_draw_image(lua_State *L){
+    auto& ref = ss_lua_check_resource_reference<ss_texture2d>(L, 1);
+    ss_texture2d* res = ref->get();
+
+    // Ignore texture that was not loaded.
+    if (res != NULL){
+        ss_core_context *C = ss_lua_get_core_context(L);
+        ss_db_draw_image_rect(C, res,
+            (float)luaL_checknumber(L, 2),
+            (float)luaL_checknumber(L, 3),
+            (float)luaL_checknumber(L, 4),
+            (float)luaL_checknumber(L, 5),
+            (float)luaL_checknumber(L, 6),
+            (float)luaL_checknumber(L, 7),
+            (float)luaL_checknumber(L, 8),
+            (float)luaL_checknumber(L, 9)
+            );
+    }
+    return 0;
+}
+
 static int ll_flush(lua_State *L) {
 	ss_core_context *C = ss_lua_get_core_context(L);
 	ss_db_flush(C);
 	return 0;
 }
 
+
 int ss_module_render2d(lua_State *L) {
     luaL_reg render2d_funcs[] = {
+        { "drawImage", ll_draw_image},
         { "drawLine", ll_draw_line },
         { "flush", ll_flush },
         { NULL, NULL }
