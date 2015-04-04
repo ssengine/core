@@ -3,13 +3,6 @@
 #include <regex>
 #include <sstream>
 
-//(?:(?<protocol>http(?:s?)|ftp)(?:\:\/\/)) 
-// (?:(?<usrpwd>\w+\:\w+)(?:\@))? 
-// (?<domain>[^/\r\n\:]+)? (?<port>\:\d+)? 
-// (?<path>(?:\/.*)*\/)? 
-// (?<filename>.*?\.(?<ext>\w{2,4}))? 
-// (?<qrystr>\??(?:\w+\=[^\#]+)(?:\&?\w+\=\w+)*)* (?<bkmrk>\#.*)?
-
 static std::regex reg(
 	"(?:(\\w+)\\:"			//schema
 	"(?:\\/\\/"

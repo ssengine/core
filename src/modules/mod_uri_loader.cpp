@@ -2,6 +2,8 @@
 
 #include <ssengine/uri.h>
 
+#define SS_PACKAGE_PATH "internal:///scripts/?.lua;"
+
 typedef struct UriReaderCtx {
 	input_stream *fp;
 	char buf[LUAL_BUFFERSIZE];
@@ -217,6 +219,9 @@ static int domodule(lua_State *L) {
 
 extern "C" int ss_module_uri_loader(lua_State *L){
 	lua_getglobal(L, "package");
+
+    lua_pushliteral(L, SS_PACKAGE_PATH);
+    lua_setfield(L, -2, "path");
 #if LUA_VERSION_NUM >= 502
 	lua_getfield(L, -1, "searchers");
 #else

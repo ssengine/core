@@ -109,6 +109,17 @@ void ss_uri_add_schema_alias(ss_core_context* C,  const char* schema, const ss_u
 
 void _ss_uri_init_schemas(ss_core_context* C){
 	ss_uri_add_schema(C, "file", new ss_file_schema_handler());
+
+#if !defined(NDEBUG)
+    const char* internalDir = getenv("SS_DEBUG_INTERNAL_DIR");
+    if (internalDir){
+        ss_uri_add_schema_alias(C, "internal", ss_uri::from_file(C, internalDir), true);
+    }
+    else
+#endif
+    {
+        //TODO: Load internal resource from zipped resource.
+    }
 }
 
 bool ss_uri::is_local() const{
