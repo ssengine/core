@@ -65,6 +65,20 @@ static int render2d_context_matrix_pop(lua_State *L){
     return 0;
 }
 
+static int render2d_context_load_ortho2d(lua_State *L){
+    render2d_context* RC = ss_lua_check_render2d_context(L, 1);
+    auto& top = RC->matrix_stack.top();
+
+    float width = (float)luaL_checknumber(L, 2);
+    float height = (float)luaL_checknumber(L, 3);
+    float x = (float)luaL_checknumber(L, 4);
+    float y = (float)luaL_checknumber(L, 5);
+
+    top = ss_matrix::ortho2d(width, height, x, y);
+
+    return 0;
+}
+
 int render2d_new_context(lua_State *L){
     render2d_context* ptr = reinterpret_cast<render2d_context*>(lua_newuserdata(L, sizeof(render2d_context)));
     new (ptr)render2d_context();
@@ -83,6 +97,7 @@ int render2d_new_context(lua_State *L){
             // Matrix operators:
             { "matrixPush", render2d_context_matrix_push },
             { "matrixPop", render2d_context_matrix_pop },
+            { "loadOrtho2D", render2d_context_load_ortho2d },
             { NULL, NULL }
         };
 

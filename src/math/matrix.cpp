@@ -88,12 +88,12 @@ namespace ss{
 		push_rotate2d(cosf(angel), sinf(angel));
 	}
 
-	matrix ortho2d(float width, float height){
+	matrix matrix::ortho2d(float width, float height, float x, float y){
 		return matrix({
 			2 / width, 0, 0, 0,
-			0,  2/height, 0, 0,
-			0, 0, 1, 0
-			-1, -1, 0, 1
+			0,  -2/height, 0, 0,
+			0, 0, 1, 0,
+			-x/width*2, y/height*2, 0, 1
 		});
 	}
 
