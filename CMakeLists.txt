@@ -35,6 +35,10 @@ SET(LOCAL_SOURCES_FILES
 	src/decoders/decoder_win32.cpp
 	src/decoders/decoder_android.cpp
 	src/decoders/decoder_ios.cpp
+
+	src/stage2d/stage2d.h
+	src/stage2d/stage2d.cpp
+	src/stage2d/mod_stage2d.cpp
 	)
 
 LINK_LIBRARIES(${SS_LUA_LIBNAME})

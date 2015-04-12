@@ -27,6 +27,7 @@ static void ss_init_lua_libs(lua_State *L){
 	ss_lua_preload_module(L, "log", ss_module_log);
 	ss_lua_preload_module(L, "render2d", ss_module_render2d);
     ss_lua_preload_module(L, "resource", ss_module_resource);
+    ss_lua_preload_module(L, "node2d", ss_module_node2d);
 	
 	lua_pushcfunction(L, ss_module_uri_loader);
 	lua_call(L, 0, 0);
