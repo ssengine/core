@@ -75,7 +75,7 @@ namespace ss{
 	// sin  cos  0 0
 	//   0    0  1 0
 	//   0    0  0 1
-	void matrix::push_rotate2d(float sin, float cos){
+	void matrix::push_rotate2d(float cos, float sin){
 		for (int i = 0; i < 4; i++){
 			float v1 = cos*arr[0][i] - sin*arr[1][i];
 			float v2 = sin*arr[0][i] + cos*arr[1][i];
@@ -97,7 +97,7 @@ namespace ss{
 		});
 	}
 
-	float2 matrix::transpose(const float2& vec){
+	float2 matrix::transpose(const float2& vec) const{
 		float w;
 		float2 ret;
 		ret.x = vec.x * arr[0][0] + vec.y * arr[1][0] + arr[3][0];
@@ -106,7 +106,7 @@ namespace ss{
 		return ret / w;
 	}
 
-	float3 matrix::transpose(const float3& vec){
+    float3 matrix::transpose(const float3& vec) const{
 		float w;
 		float3 ret;
 		ret.x = vec.x * arr[0][0] + vec.y * arr[1][0] + vec.z * arr[2][0] + arr[3][0];
@@ -116,7 +116,7 @@ namespace ss{
 		return ret / w;
 	}
 
-	float4 matrix::transpose(const float4& vec){
+    float4 matrix::transpose(const float4& vec) const{
 		float4 ret;
 		ret.x = vec.x * arr[0][0] + vec.y * arr[1][0] + vec.z * arr[2][0] + vec.w * arr[3][0];
 		ret.y = vec.x * arr[0][1] + vec.y * arr[1][1] + vec.z * arr[2][1] + vec.w * arr[3][1];

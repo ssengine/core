@@ -1,4 +1,5 @@
 #include "stage2d.h"
+#include <ssengine/render/drawbatch.h>
 
 #include <lua.hpp>
 #include "../modules.h"
@@ -196,6 +197,15 @@ static int node2d_get_scale(lua_State *L){
     return 1;
 }
 
+static int node2d_trans_matrix(lua_State *L){
+    ss_node2d* self = ss_lua_get_node2d(L, 1);
+    render2d_context* RC = ss_lua_check_render2d_context(L, 2);
+    const auto& transform = self->get_transform();
+    RC->matrix_stack.top().push_translate(transform.add.real(), transform.add.imag());
+    RC->matrix_stack.top().push_rotate2d(transform.mul.real(), transform.mul.imag());
+    return 0;
+}
+
 int ss_module_node2d(lua_State *L) {
     luaL_reg node2d_funcs[] = {
         { "createRoot", node2d_create_root },
@@ -218,6 +228,7 @@ int ss_module_node2d(lua_State *L) {
         { "getxy", node2d_getxy },
         { "getRotation", node2d_get_rot },
         { "getScale", node2d_get_scale },
+        { "transMatrix", node2d_trans_matrix },
         { NULL, NULL }
     };
 #if LUA_VERSION_NUM >= 502
