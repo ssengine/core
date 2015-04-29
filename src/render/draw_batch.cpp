@@ -9,7 +9,7 @@ using namespace ss;
 
 //TODO: use Map(Lock) instead of copy may be good for performance, but needs test.
 
-ss_draw_batch::ss_draw_batch(ss_render_device* _device)
+ss_draw_batch_impl::ss_draw_batch_impl(ss_render_device* _device)
 	: device(_device), size(0), offset(0)
 {
 	ss_render_input_element layout_elements[] = {
@@ -36,7 +36,7 @@ ss_draw_batch::ss_draw_batch(ss_render_device* _device)
 	ptr_texcoord = new ss::float2[MAX_VERTEX_COUNT];
 }
 
-ss_draw_batch::~ss_draw_batch()
+ss_draw_batch_impl::~ss_draw_batch_impl()
 {
 	this->flush();
 
@@ -52,12 +52,12 @@ ss_draw_batch::~ss_draw_batch()
 	delete buf_texcoord;
 }
 
-void ss_draw_batch::prepare(ss_primitive_type pt, size_t count)
+void ss_draw_batch_impl::prepare(ss_primitive_type pt, size_t count)
 {
 	prepare(device->get_predefined_technique(SS_PDT_STANDARD_NO_TEXTURE), pt, count);
 }
 
-void ss_draw_batch::prepare(ss_texture2d* texture, ss_primitive_type pt, size_t count)
+void ss_draw_batch_impl::prepare(ss_texture2d* texture, ss_primitive_type pt, size_t count)
 {
 	prepare(device->get_predefined_technique(SS_PDT_STANDARD), texture, pt, count);
 }
@@ -65,7 +65,7 @@ void ss_draw_batch::prepare(ss_texture2d* texture, ss_primitive_type pt, size_t 
 unsigned int s_strides[3] = { sizeof(float)* 2, sizeof(float)* 4, sizeof(float)* 2 };
 unsigned int s_offsets[3] = { 0, 0, 0 };
 
-void ss_draw_batch::prepare(ss_render_technique* _tech, ss_primitive_type _pt, size_t count)
+void ss_draw_batch_impl::prepare(ss_render_technique* _tech, ss_primitive_type _pt, size_t count)
 {
 	if (tech != _tech || il != il_notexture || pt != _pt || count + size > MAX_VERTEX_COUNT){
 		flush();
@@ -85,7 +85,7 @@ void ss_draw_batch::prepare(ss_render_technique* _tech, ss_primitive_type _pt, s
 	size += count;
 }
 
-void ss_draw_batch::prepare(ss_render_technique* _tech, ss_texture2d* _texture, ss_primitive_type _pt, size_t count)
+void ss_draw_batch_impl::prepare(ss_render_technique* _tech, ss_texture2d* _texture, ss_primitive_type _pt, size_t count)
 {
 	if (tech != _tech || il != il_texture || pt != _pt || texture != _texture || count + size > MAX_VERTEX_COUNT){
 		flush();
@@ -105,7 +105,7 @@ void ss_draw_batch::prepare(ss_render_technique* _tech, ss_texture2d* _texture, 
 	size += count;
 }
 
-void ss_draw_batch::flush(){
+void ss_draw_batch_impl::flush(){
 	if (size > 0){
 		// Copy vertex data into buffer
 		// Why not lock instead? Prepare for DX and cross-thread render.
@@ -139,7 +139,7 @@ void ss_db_flush(ss_core_context* C){
 }
 
 void ss_db_draw_line(ss_core_context* C, const ss::matrix& matrix, float x0, float y0, float x1, float y1){
-	ss_draw_batch* v = C->draw_batch;
+    ss_draw_batch_impl* v = C->draw_batch;
 	v->prepare(SS_PT_LINELIST, 2);
     v->pos(0) = matrix.transpose(float2(x0, y0));
     v->pos(1) = matrix.transpose(float2(x1, y1));
@@ -158,7 +158,7 @@ void ss_db_draw_image_rect(
 	float tr = tl + tw;
 	float tb = tt + th;
 
-	ss_draw_batch* v = C->draw_batch;
+    ss_draw_batch_impl* v = C->draw_batch;
 	v->prepare(texture, SS_PT_TRIANGLELIST, 6);
 
 	v->diffuse(0) = v->diffuse(1) =

@@ -49,7 +49,12 @@ static unsigned int _get_image_stride(unsigned int width, unsigned int byteCount
 }
 
 int load_image(ss_core_context *C, const char *uri, ss_userdata_image *data) {
-    CStreamWrapper wrapper(ss_uri_open_for_read(C, uri));
+    input_stream* stream = ss_uri_open_for_read(C, uri);
+    if (!stream){
+        SS_LOGE("Load image from not exist uri: [%s]", uri);
+        return -1;
+    }
+    CStreamWrapper wrapper(stream);
 
     CComPtr<IWICBitmapDecoder> decoder;
 

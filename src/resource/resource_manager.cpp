@@ -15,6 +15,11 @@ ss_resource_ref* ss_resource_from_uri(ss_core_context* C, const char* uri)
 	return NULL;
 }
 
+const std::string & ss_resource_get_uri(ss_core_context* C, ss_resource_ref* _ref){
+    auto* ref = wrap(_ref);
+    return ref->uri;
+}
+
 ss_resource_ref* ss_resource_create(ss_core_context* C, const ss_resource_prototype* prototype, const char* uri, int device_type)
 {
 	assert(C->resource_from_uris.find(uri) == C->resource_from_uris.end());

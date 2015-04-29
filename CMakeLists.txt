@@ -19,6 +19,7 @@ SET(LOCAL_SOURCES_FILES
 	src/uri/file_schema.cpp
 	src/uri/schemas.h
 	
+	src/modules/mod_ss.c
 	src/modules/mod_log.c
 	src/modules/mod_uri_loader.cpp
 	src/modules/mod_render2d.cpp

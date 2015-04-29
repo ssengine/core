@@ -35,7 +35,7 @@ struct ss_macro{
 
 struct ss_uri_schema_handler;
 
-struct ss_draw_batch;
+struct ss_draw_batch_impl;
 
 enum ss_resource_status_mask
 {
@@ -98,7 +98,7 @@ struct ss_core_context{
 	lua_State*		L;
 	ss_render_device* renderer;
 
-	ss_draw_batch*	draw_batch;
+    ss_draw_batch_impl*	draw_batch;
 	ss_core_context();
 	~ss_core_context();
 };

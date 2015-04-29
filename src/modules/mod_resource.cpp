@@ -40,8 +40,6 @@ void ss_lua_push_resource_ref(lua_State* L, struct ss_resource_ref* res){
     lua_setmetatable(L, -2);
 }
 
-typedef ss_resource_ref* (*resource_loader_func)(ss_core_context* C, const char* uri);
-
 static int resource_get(lua_State *L){
     lua_pushvalue(L, 1);
     lua_gettable(L, lua_upvalueindex(1));

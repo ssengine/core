@@ -6,9 +6,9 @@
 
 typedef struct ss_render_device ss_render_device;
 
-struct ss_draw_batch{
-	ss_draw_batch(ss_render_device* _device);
-	~ss_draw_batch();
+struct ss_draw_batch_impl : public ss_draw_batch{
+    ss_draw_batch_impl(ss_render_device* _device);
+    ~ss_draw_batch_impl();
 
 	void flush();
 
